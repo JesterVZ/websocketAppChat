@@ -53,7 +53,7 @@ io.on("connection", (socket) => {
     })
 
     socket.on("disconnect", () => {
-        console.log(socket.id);
+        console.log("client disconnected", socket.id);
         /// Сделать удаление тем, паривязанных к определенному пользователю
     });
 });
