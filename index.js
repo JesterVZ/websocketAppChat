@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import theme from "./data/theme.js"
+import m from "./data/message.js"
 import { v4 as uuidv4 } from 'uuid';
 
 const io = new Server({ cors: "https://localhost:3001"});
@@ -47,7 +48,8 @@ io.on("connection", (socket) => {
     socket.on("sendMessage", (message) => {
         console.log(message);
         let messageArray = messagesMap.get(message.themeId);
-        messageArray.push(message.message);
+        let newMessage = new m.Message(uuidv4(), message.themeId, message.message, socket.id);
+        messageArray.push(newMessage);
         messagesMap.set(message.themeId, messageArray);
         socket.to(message.themeId).emit("messages", messagesMap.get(message.themeId));
     })
