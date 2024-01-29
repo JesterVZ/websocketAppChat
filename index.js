@@ -13,7 +13,7 @@ let messagesMap = new Map();
 
 io.on("connection", (socket) => {
     console.log("New connection", socket.id);
-    io.emit("themes", themes);
+    socket.send(socket.id);
 
     socket.on("addNewTheme", (value) => {
         console.log("new theme", value);
@@ -51,7 +51,7 @@ io.on("connection", (socket) => {
         let newMessage = new m.Message(uuidv4(), message.themeId, message.message, socket.id);
         messageArray.push(newMessage);
         messagesMap.set(message.themeId, messageArray);
-        socket.to(message.themeId).emit("messages", messagesMap.get(message.themeId));
+        io.to(message.themeId).emit("messages", messagesMap.get(message.themeId));
     })
 
     socket.on("disconnect", () => {
