@@ -14,6 +14,7 @@ let messagesMap = new Map();
 io.on("connection", (socket) => {
     console.log("New connection", socket.id);
     socket.send(socket.id);
+    io.emit("themes", themes);
 
     socket.on("addNewTheme", (value) => {
         console.log("new theme", value);
@@ -37,6 +38,11 @@ io.on("connection", (socket) => {
         
     });
 
+    socket.on('leave', (room) => {
+        console.log('leave from room');
+        io.to(room).emit('disconnected', socket.id);
+    });
+
     socket.on("selectTheme", (id) => {
         socket.join(id);
         const index = themes.indexOf(themes.find((e) => e.id === id));
@@ -55,7 +61,9 @@ io.on("connection", (socket) => {
     })
 
     socket.on("disconnect", () => {
+        socket.send('disconnected', socket.id);
         console.log("client disconnected", socket.id);
+        
         /// Сделать удаление тем, паривязанных к определенному пользователю
     });
 });
