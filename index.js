@@ -1,41 +1,44 @@
 import { Server } from "socket.io";
-import theme from "./data/theme.js"
+import  { Theme } from "./data/theme.js"
 import m from "./data/message.js"
 import { v4 as uuidv4 } from 'uuid';
 
 const io = new Server({ cors: "https://localhost:3001"});
 
-/// список тем
-let themes = [];
+
+let themesMap = new Map();
 
 /// мапа сообщений, где ключ - id темы, а значение - массив сообщений для нее
 let messagesMap = new Map();
 
 io.on("connection", (socket) => {
+
+    function emitThemes(){
+        let themes = themesMap.values();
+        io.emit("themes", Array.from(themes));
+    }
+
     console.log("New connection", socket.id);
     socket.send(socket.id);
-    io.emit("themes", themes);
+    emitThemes();
 
     socket.on("addNewTheme", (value) => {
         console.log("new theme", value);
         let title = value.title;
         let id = uuidv4();
-        themes.push(new theme.Theme(title, id));
+        let newTheme = new Theme(title, id);
+        themesMap.set(socket.id, newTheme)
         socket.join(id);
-        io.emit("themes", themes);
-        io.emit("createdTheme", new theme.Theme(title, id));
+        emitThemes();
+        io.emit("createdTheme", newTheme);
         messagesMap.set(id, []);
     });
 
     socket.on("deleteTheme", (id) => {
         console.log(id);
-        const index = themes.indexOf(themes.find((e) => e.id === id));
-        if(index > -1){
-            themes.splice(index, 1);
-            io.emit("themes", themes);
-            messagesMap.delete(id);
-        }
-        
+        themesMap.delete(socket.id);
+        emitThemes();
+        messagesMap.delete(id);
     });
 
     socket.on('leave', (room) => {
@@ -43,12 +46,12 @@ io.on("connection", (socket) => {
         io.to(room).emit('disconnected', socket.id);
     });
 
-    socket.on("selectTheme", (id) => {
-        socket.join(id);
-        const index = themes.indexOf(themes.find((e) => e.id === id));
-        themes.splice(index, 1);
-        io.emit("themes", themes);
-        io.emit('join', id);
+    socket.on("selectTheme", (roomId) => {
+        socket.join(roomId);
+        themesMap.delete(socket.id);
+        emitThemes();
+        io.to(roomId).emit('join', roomId);
+        console.log('leave from room');
     });
 
     socket.on("sendMessage", (message) => {
@@ -61,10 +64,12 @@ io.on("connection", (socket) => {
     })
 
     socket.on("disconnect", () => {
-        socket.send('disconnected', socket.id);
+        let room = themesMap.get(socket.id);
+        io.to(room).emit('disconnected', socket.id);
         console.log("client disconnected", socket.id);
-        
-        /// Сделать удаление тем, паривязанных к определенному пользователю
+        themesMap.delete(socket.id);
+        emitThemes();
+
     });
 });
 
