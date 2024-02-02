@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 const io = new Server({ cors: "https://localhost:3001"});
 
 
-let themesMap = new Map();
+let themesList = new Array();
 
 /// мапа сообщений, где ключ - id темы, а значение - массив сообщений для нее
 let messagesMap = new Map();
@@ -14,8 +14,7 @@ let messagesMap = new Map();
 io.on("connection", (socket) => {
 
     function emitThemes(){
-        let themes = themesMap.values();
-        io.emit("themes", Array.from(themes));
+        io.emit("themes", themesList);
     }
 
     console.log("New connection", socket.id);
@@ -24,10 +23,13 @@ io.on("connection", (socket) => {
 
     socket.on("addNewTheme", (value) => {
         console.log("new theme", value);
+
         let title = value.title;
         let id = uuidv4();
         let newTheme = new Theme(title, id);
-        themesMap.set(socket.id, newTheme)
+
+        themesList.push(newTheme)
+
         socket.join(id);
         emitThemes();
         io.emit("createdTheme", newTheme);
@@ -36,6 +38,7 @@ io.on("connection", (socket) => {
 
     socket.on("deleteTheme", (id) => {
         console.log(id);
+        
         themesMap.delete(socket.id);
         emitThemes();
         messagesMap.delete(id);
@@ -48,10 +51,10 @@ io.on("connection", (socket) => {
 
     socket.on("selectTheme", (roomId) => {
         socket.join(roomId);
-        themesMap.delete(socket.id);
+        const index = themesList.indexOf(themesList.find((e) => e.id === roomId));
+        themesList.splice(index, 1);
         emitThemes();
         io.to(roomId).emit('join', roomId);
-        console.log('leave from room');
     });
 
     socket.on("sendMessage", (message) => {
@@ -64,10 +67,8 @@ io.on("connection", (socket) => {
     })
 
     socket.on("disconnect", () => {
-        let room = themesMap.get(socket.id);
-        io.to(room).emit('disconnected', socket.id);
+        io.emit('disconnected', socket.id);
         console.log("client disconnected", socket.id);
-        themesMap.delete(socket.id);
         emitThemes();
 
     });
