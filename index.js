@@ -38,8 +38,6 @@ io.on("connection", (socket) => {
 
     socket.on("deleteTheme", (id) => {
         console.log(id);
-        
-        themesMap.delete(socket.id);
         emitThemes();
         messagesMap.delete(id);
     });
