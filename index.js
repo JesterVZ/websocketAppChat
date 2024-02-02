@@ -38,6 +38,11 @@ io.on("connection", (socket) => {
 
     socket.on("deleteTheme", (id) => {
         console.log(id);
+        const index = themesList.indexOf(themesList.find((e) => e.id === id));
+        if(index !== "undefined"){
+            themesList.splice(index, 1);
+        }
+        
         emitThemes();
         messagesMap.delete(id);
     });
