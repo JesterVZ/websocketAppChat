@@ -50,6 +50,7 @@ io.on("connection", (socket) => {
     socket.on('leave', (room) => {
         console.log('leave from room');
         io.to(room).emit('disconnected', socket.id);
+        socket.leave(room);
     });
 
     socket.on("selectTheme", (roomId) => {
