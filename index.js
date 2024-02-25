@@ -12,7 +12,6 @@ let themesList = new Array();
 let messagesMap = new Map();
 
 io.on("connection", (socket) => {
-
     function emitThemes(){
         io.emit("themes", themesList);
     }
@@ -22,11 +21,14 @@ io.on("connection", (socket) => {
     emitThemes();
 
     socket.on("addNewTheme", (value) => {
-        console.log("new theme", value);
-
+        
         let title = value.title;
         let id = uuidv4();
-        let newTheme = new Theme(title, id);
+        let isCanRing = value.isCanRing;
+        let userId = socket.id;
+        let newTheme = new Theme(title, id, isCanRing, userId);
+        
+        console.log("new theme", newTheme);
 
         themesList.push(newTheme)
 
@@ -56,9 +58,12 @@ io.on("connection", (socket) => {
     socket.on("selectTheme", (roomId) => {
         socket.join(roomId);
         const index = themesList.indexOf(themesList.find((e) => e.id === roomId));
+        const creatorId = themesList[index].userId;
         themesList.splice(index, 1);
         emitThemes();
         io.to(roomId).emit('join', roomId);
+        io.to(roomId).emit('creatorId', creatorId);
+        io.to(roomId).emit('interlocoutorId', socket.id);
     });
 
     socket.on("sendMessage", (message) => {
@@ -76,6 +81,36 @@ io.on("connection", (socket) => {
         emitThemes();
 
     });
+    socket.on("makeCall", (data) => {
+        let calleeId = data.calleeId;
+        let sdpOffer = data.sdpOffer;
+        console.log('user', socket.user);
+    
+        socket.to(calleeId).emit("newCall", {
+          callerId: socket.id,
+          sdpOffer: sdpOffer,
+        });
+      });
+    
+    socket.on("answerCall", (data) => {
+        let callerId = data.callerId;
+        let sdpAnswer = data.sdpAnswer;
+    
+        socket.to(callerId).emit("callAnswered", {
+          callee: socket.user,
+          sdpAnswer: sdpAnswer,
+        });
+      });
+    
+    socket.on("IceCandidate", (data) => {
+        let calleeId = data.calleeId;
+        let iceCandidate = data.iceCandidate;
+    
+        socket.to(calleeId).emit("IceCandidate", {
+          sender: socket.user,
+          iceCandidate: iceCandidate,
+        });
+      });
 });
 
 io.listen(3001);

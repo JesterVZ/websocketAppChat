@@ -1,10 +1,10 @@
 class Theme{
 
-    constructor(title, id, creatorId, joinedId){
+    constructor(title, id, isCanRing, userId){
         this.title = title;
         this.id = id;
-        this.creatorId;
-        this.joinedId;
+        this.isCanRing = isCanRing;
+        this.userId = userId;
         
     }
     
