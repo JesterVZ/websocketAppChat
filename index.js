@@ -64,6 +64,8 @@ io.on("connection", (socket) => {
         io.to(roomId).emit('join', roomId);
         io.to(roomId).emit('creatorId', creatorId);
         io.to(roomId).emit('interlocoutorId', socket.id);
+        console.log('creatorId', creatorId);
+        console.log('interlocoutorId', socket.id);
     });
 
     socket.on("sendMessage", (message) => {
