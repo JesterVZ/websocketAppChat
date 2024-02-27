@@ -86,7 +86,6 @@ io.on("connection", (socket) => {
     socket.on("makeCall", (data) => {
         let calleeId = data.calleeId;
         let sdpOffer = data.sdpOffer;
-        console.log('user', socket.user);
     
         socket.to(calleeId).emit("newCall", {
           callerId: socket.id,
@@ -103,6 +102,20 @@ io.on("connection", (socket) => {
           sdpAnswer: sdpAnswer,
         });
       });
+
+    socket.on("leaveCall", (data) => {
+      let calleeId = data.calleeId;
+      socket.to(calleeId).emit("callEnd", {
+        callee: socket.user,
+      })
+    });
+
+    socket.on("cancelCall", (data) => {
+      let calleeId = data.calleeId;
+      socket.to(calleeId).emit("callCanceled", {
+        callee: socket.user,
+      })
+    });
     
     socket.on("IceCandidate", (data) => {
         let calleeId = data.calleeId;
