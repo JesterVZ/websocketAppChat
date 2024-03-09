@@ -52,6 +52,14 @@ class ChatServer {
             socket.on("IceCandidate", (data) => {
                 this.sendIceCandidate(socket, data);
             });
+
+            socket.on("startTyping", (data) => {
+                this.startTyping(socket, data);
+            });
+
+            socket.on("endTyping", (data) => {
+                this.endTyping(socket, data);
+            });
         });
 
         this.io.listen(3001);
@@ -116,8 +124,11 @@ class ChatServer {
         this.io.emit('disconnected', socket.id);
         console.log("client disconnected", socket.id);
         const room = this.themesList.find((e) => e.userId == socket.id);
-        this.leaveRoom(socket, room);
-        this.emitThemes();
+        if (room !== undefined){
+            this.leaveRoom(socket, room);
+            this.emitThemes();
+        }
+        
     }
 
     makeCall(socket, data) {
@@ -163,6 +174,21 @@ let sdpAnswer = data.sdpAnswer;
             sender: socket.user,
             iceCandidate: iceCandidate,
         });
+    }
+
+    startTyping(socket, data){
+        let calleeId = data.calleeId;
+        socket.to(calleeId).emit("typing", {
+        typing: true
+        });
+    }
+
+    endTyping(socket, data){
+        let calleeId = data.calleeId;
+        socket.to(calleeId).emit("typing", {
+        typing: false
+        });
+
     }
 }
 
